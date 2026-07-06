@@ -234,6 +234,11 @@ function totalOwed(){
   for(const p of db.players.filter(p=>p.active)){ const b=balance(p.id); if(b>0) t+=b; }
   return t;
 }
+function gamesBalance(pid){ // owed from games only — sign-on left out for now
+  let t=0;
+  for(const i of ledger(pid).filter(i=>i.cat!=='signon')) t += (i.kind==='chg'? i.amt : -i.amt);
+  return t;
+}
 
 /* ============ NAV / RENDER ============ */
 let route={page:'squad'};
@@ -681,14 +686,14 @@ function addExpense(){
 /* ============ MESSAGES ============ */
 function playerMessage(pid){
   const p=db.players.find(x=>x.id===pid);
-  const b=balance(pid);
-  const items=ledger(pid);
+  const items=ledger(pid).filter(i=> i.cat!=='signon'); // sign-on left out of chase messages for now
   let lines=['*FENTON UNITED — subs update*', p.name+':',''];
   let chg=0,paid=0;
   for(const i of items){
     if(i.kind==='chg'){ chg+=i.amt; lines.push('• '+i.sub.split(' · ')[0]+' — '+i.label+(i.sub.includes('mins')?' — '+i.sub.split(' · ')[1]:'')+' — '+fm(i.amt)); }
     else paid+=i.amt;
   }
+  const b = gamesBalance(pid);
   lines.push('');
   if(paid>0) lines.push('Paid so far: '+fm(paid));
   lines.push(b>0? '*Owed: '+fm(b)+'*' : b<0? '*In credit: '+fm(-b)+'*' : '*All square 👍*');
@@ -700,7 +705,7 @@ function waMessage(pid){
   toast('Message copied — paste into WhatsApp');
 }
 function gcMessage(){
-  const owers=db.players.filter(p=>p.active).map(p=>({p,b:balance(p.id)})).filter(x=>x.b>0).sort((a,b)=>b.b-a.b);
+  const owers=db.players.filter(p=>p.active).map(p=>({p,b:gamesBalance(p.id)})).filter(x=>x.b>0).sort((a,b)=>b.b-a.b);
   if(!owers.length) return toast('Nobody owes anything 🎉');
   let lines=['*FENTON UNITED — subs owed* 💰',''];
   for(const {p,b} of owers) lines.push(p.name+' — '+fm(b));
