@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Fenton United — Payments</title>
+<style>
+  :root{
+    --bg:#081410; --bg2:#050d09; --panel:#10231a; --panel2:#0c1d14;
+    --green:#2ab852; --green-dk:#166834; --gold:#e9c450; --gold-dk:#b8912a;
+    --white:#f4f7f3; --mute:#96ac9d; --faint:#5d7466; --red:#e05252; --hair:#1e3626;
+    --cond:'Arial Narrow','AvenirNextCondensed-Bold','Helvetica Neue',Arial,sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--white); font-family:-apple-system,system-ui,'Segoe UI',Roboto,Arial,sans-serif;
+    font-size:16px; min-height:100vh; padding-bottom:84px;
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(8,20,16,.96); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--hair); padding:14px 16px 10px;
+  }
+  header .row{display:flex; align-items:baseline; justify-content:space-between;}
+  header h1{
+    font-family:var(--cond); font-weight:800; letter-spacing:.06em;
+    font-size:22px; text-transform:uppercase;
+  }
+  header h1 span{color:var(--green);}
+  #hdrOwed{font-family:var(--cond); font-size:15px; color:var(--gold); letter-spacing:.04em;}
+  .banner{
+    background:var(--panel); border:1px solid var(--gold-dk); color:var(--gold);
+    border-radius:10px; padding:8px 12px; font-size:13px; margin-top:8px; display:none;
+  }
+  main{padding:14px 14px 20px; max-width:560px; margin:0 auto;}
+
+  /* tab bar */
+  nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:rgba(6,13,10,.97); border-top:1px solid var(--hair);
+    display:flex; padding:6px 4px calc(10px + env(safe-area-inset-bottom));
+  }
+  nav button{
+    flex:1; background:none; border:none; color:var(--faint); font-family:var(--cond);
+    font-size:14px; letter-spacing:.08em; text-transform:uppercase; padding:10px 0 4px; cursor:pointer;
+  }
+  nav button .ico{display:block; font-size:19px; margin-bottom:3px;}
+  nav button.active{color:var(--green);}
+
+  h2{
+    font-family:var(--cond); text-transform:uppercase; letter-spacing:.08em;
+    font-size:13px; color:var(--gold); margin:18px 2px 8px;
+  }
+  .card{
+    background:var(--panel); border-radius:14px; padding:14px; margin-bottom:10px;
+  }
+  .card.flat{padding:0; overflow:hidden;}
+  .rowline{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:13px 14px; border-bottom:1px solid var(--hair); cursor:pointer;
+  }
+  .rowline:last-child{border-bottom:none;}
+  .rowline .nm{font-weight:600; font-size:16px;}
+  .rowline .sub{color:var(--faint); font-size:12.5px; margin-top:2px;}
+  .pill{
+    font-family:var(--cond); font-weight:800; letter-spacing:.03em;
+    border-radius:999px; padding:5px 13px; font-size:15px; white-space:nowrap;
+  }
+  .owes{background:#3a1616; color:#ff9d9d;}
+  .clear{background:#12301c; color:#7fd89b;}
+  .credit{background:#132a33; color:#8fd4ea;}
+
+  button.primary,button.ghost,button.danger,button.gold{
+    display:block; width:100%; border:none; border-radius:12px; padding:14px;
+    font-family:var(--cond); font-size:16px; font-weight:800; letter-spacing:.06em;
+    text-transform:uppercase; cursor:pointer; margin-top:10px;
+  }
+  button.primary{background:var(--green); color:#06130a;}
+  button.gold{background:var(--gold); color:#171204;}
+  button.ghost{background:none; border:1.5px solid var(--hair); color:var(--mute);}
+  button.danger{background:none; border:1.5px solid #5a2626; color:var(--red);}
+  .btnrow{display:flex; gap:8px;} .btnrow button{flex:1;}
+
+  label{display:block; font-size:12.5px; color:var(--mute); margin:12px 2px 5px; letter-spacing:.02em;}
+  input,select,textarea{
+    width:100%; background:var(--panel2); color:var(--white); border:1px solid var(--hair);
+    border-radius:10px; padding:12px; font-size:16px; font-family:inherit;
+  }
+  textarea{min-height:150px; line-height:1.45; font-size:14px;}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--green-dk);}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+
+  /* minutes quick buttons */
+  .minrow{display:flex; align-items:center; gap:6px; padding:10px 12px; border-bottom:1px solid var(--hair);}
+  .minrow .who{flex:1; font-weight:600; font-size:15px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .minbtn{
+    border:1.5px solid var(--hair); background:none; color:var(--mute); border-radius:8px;
+    font-family:var(--cond); font-weight:800; font-size:13px; padding:8px 0; width:46px; cursor:pointer;
+  }
+  .minbtn.sel{background:var(--green); border-color:var(--green); color:#06130a;}
+  .cardbtn{width:34px; font-size:12px;}
+  .cardbtn.selY{background:var(--gold); border-color:var(--gold); color:#171204;}
+  .cardbtn.selR{background:var(--red); border-color:var(--red); color:#fff;}
+
+  /* ledger */
+  .led{display:flex; justify-content:space-between; gap:10px; padding:11px 14px; border-bottom:1px solid var(--hair); font-size:14px;}
+  .led:last-child{border-bottom:none;}
+  .led .l{color:var(--white);} .led .l .sub{color:var(--faint); font-size:12px; margin-top:2px;}
+  .led .amt{font-family:var(--cond); font-weight:800; font-size:15px; white-space:nowrap;}
+  .chg{color:#ff9d9d;} .pay{color:#7fd89b;}
+  .led .del{color:var(--faint); background:none; border:none; font-size:15px; padding:0 0 0 8px; cursor:pointer;}
+
+  .stat{display:flex; justify-content:space-between; padding:10px 2px; border-bottom:1px solid var(--hair); font-size:15px;}
+  .stat:last-child{border-bottom:none;}
+  .stat b{font-family:var(--cond); font-size:16px; letter-spacing:.03em;}
+  .g{color:#7fd89b;} .r{color:#ff9d9d;} .go{color:var(--gold);}
+
+  .back{
+    background:none; border:none; color:var(--green); font-family:var(--cond);
+    font-size:15px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; padding:2px 0 10px; font-weight:800;
+  }
+  .note{color:var(--faint); font-size:12.5px; margin:8px 2px; line-height:1.5;}
+  .empty{color:var(--faint); text-align:center; padding:28px 10px; font-size:14px; line-height:1.6;}
+  .toast{
+    position:fixed; bottom:96px; left:50%; transform:translateX(-50%); z-index:50;
+    background:var(--green); color:#06130a; font-weight:700; border-radius:999px;
+    padding:10px 20px; font-size:14px; display:none; white-space:nowrap;
+  }
+  .tag{font-family:var(--cond); font-size:11.5px; letter-spacing:.07em; color:var(--faint); text-transform:uppercase;}
+  .matchhead{padding:13px 14px; border-bottom:1px solid var(--hair);}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>FENTON <span>PAYMENTS</span></h1>
+    <div id="hdrOwed"></div>
+  </div>
+  <div class="banner" id="backupBanner">⚠ No backup for a while. More → Backup now.</div>
+</header>
+
+<main id="view"></main>
+
+<nav>
+  <button id="tb-squad" onclick="go('squad')"><span class="ico">👥</span>Squad</button>
+  <button id="tb-match" onclick="go('matches')"><span class="ico">⚽️</span>Matches</button>
+  <button id="tb-money" onclick="go('money')"><span class="ico">💰</span>Money</button>
+  <button id="tb-more" onclick="go('more')"><span class="ico">☰</span>More</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ DATA ============ */
+const KEY='fenton-payments-v1';
+const DEF = {
+  settings:{
+    tierOver60:500, tier45to60:400, tierUnder45:300,
+    awayFriendlyFlat:200, signOn:3500, cardY:1200, cardR:4000,
+    refCost:4500, bank:'', gcName:'FENTON UNITED', lastBackup:0
+  },
+  players:[], matches:[], apps:[], charges:[], payments:[], expenses:[]
+};
+const SEED_JSON = {"settings": {"tierOver60": 500, "tier45to60": 400, "tierUnder45": 300, "awayFriendlyFlat": 200, "signOn": 3500, "cardY": 1200, "cardR": 4000, "refCost": 4500, "bank": "", "gcName": "FENTON UNITED", "lastBackup": 0}, "players": [{"id": "mr8cazdppu6x8", "name": "Yusuf Rafiq", "active": true}, {"id": "mr8cazdpsks2v", "name": "Ahmed Khan", "active": true}, {"id": "mr8cazdpxeedx", "name": "Adam Imtiaz", "active": true}, {"id": "mr8cazdp5v1q3", "name": "Zen Buzeni", "active": true}, {"id": "mr8cazdpcc6ox", "name": "Mustafa Mohi'ud'din", "active": true}, {"id": "mr8cazdppz9ot", "name": "Mahmood Awad", "active": true}, {"id": "mr8cazdpown25", "name": "Uwais Khan", "active": true}, {"id": "mr8cazdpuhob4", "name": "Usama Habeeb", "active": true}, {"id": "mr8cazdplrtnn", "name": "Zain Sarfraz", "active": true}, {"id": "mr8cazdpsuzzr", "name": "Antonio Ferra", "active": true}, {"id": "mr8cazdp0crib", "name": "Aahill Ali", "active": true}, {"id": "mr8cazdp7el49", "name": "Shamas Imtiaz", "active": true}, {"id": "mr8cazdp0isit", "name": "Dylan Bains", "active": true}, {"id": "mr8cazdpsz83i", "name": "Hassan Khan", "active": true}, {"id": "mr8cazdp4vozz", "name": "Som Onyemenem", "active": true}, {"id": "mr8cazdposr7u", "name": "Callum Dyson", "active": true}, {"id": "mr8cazdp1df55", "name": "Niall Owen", "active": true}, {"id": "mr8cazdp7cy8x", "name": "Jackson Kinwanda", "active": true}, {"id": "mr8cazdp9g7k0", "name": "Samuel Effram", "active": true}, {"id": "mr8cazdpg2ofo", "name": "Mushy", "active": true}, {"id": "mr8cazdpq4q9s", "name": "Harris", "active": true}, {"id": "mr8cazdp9qd6j", "name": "Adil", "active": true}, {"id": "mr8cazdpr3ft2", "name": "Jonno", "active": true}, {"id": "mr8cazdpi7qhi", "name": "Sarhaan", "active": true}, {"id": "mr8cazdpvup5x", "name": "Saad", "active": true}, {"id": "mr8cazdp5bswb", "name": "Mohammed", "active": true}, {"id": "mr8cazdpnlk87", "name": "Saleh", "active": true}, {"id": "mr8cazdp20k1z", "name": "Ange", "active": true}, {"id": "mr8cazdpo4s5h", "name": "Peter", "active": true}], "matches": [{"id": "mr8cbfa5x4lsf", "opponent": "Berry Brow Reserves", "date": "2026-07-04", "venue": "H", "type": "Friendly", "pricing": "tiered", "flatAmount": 200}], "apps": [{"id": "mr8cbfa5wfpxa", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpuhob4", "mins": 60, "cardY": false, "cardR": false}, {"id": "mr8cbfa6essb1", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpown25", "mins": 80, "cardY": false, "cardR": false}, {"id": "mr8cbfa7wkynu", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpsuzzr", "mins": 90, "cardY": false, "cardR": false}, {"id": "mr8cbfa8wv6qk", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdp5v1q3", "mins": 90, "cardY": false, "cardR": false}, {"id": "mr8cbfa9j7cmb", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpq4q9s", "mins": 60, "cardY": false, "cardR": false}, {"id": "mr8cbfa9ahi9b", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpg2ofo", "mins": 45, "cardY": false, "cardR": false}, {"id": "mr8cbfabaw3ff", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdp9qd6j", "mins": 45, "cardY": false, "cardR": false}, {"id": "mr8cbfabdscqe", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdpvup5x", "mins": 45, "cardY": false, "cardR": false}, {"id": "mr8cbfac80h1w", "matchId": "mr8cbfa5x4lsf", "playerId": "mr8cazdp0crib", "mins": 60, "cardY": false, "cardR": false}], "charges": [{"id": "mr8cb99acno1z", "playerId": "mr8cazdppu6x8", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cl522f", "playerId": "mr8cazdpsks2v", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cgppv6", "playerId": "mr8cazdpxeedx", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cwi6bh", "playerId": "mr8cazdp5v1q3", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cdb62u", "playerId": "mr8cazdpcc6ox", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99ca83vg", "playerId": "mr8cazdppz9ot", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99c6ln5m", "playerId": "mr8cazdpown25", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cbq1um", "playerId": "mr8cazdpuhob4", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99ceqwe7", "playerId": "mr8cazdplrtnn", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99c4u7af", "playerId": "mr8cazdpsuzzr", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99coo08f", "playerId": "mr8cazdp0crib", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cjcreo", "playerId": "mr8cazdp7el49", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99coa3c4", "playerId": "mr8cazdp0isit", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99c04lf2", "playerId": "mr8cazdpsz83i", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99c4813v", "playerId": "mr8cazdp4vozz", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99cm738c", "playerId": "mr8cazdposr7u", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99celhq7", "playerId": "mr8cazdp1df55", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99clmdtq", "playerId": "mr8cazdp7cy8x", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99dz10sx", "playerId": "mr8cazdp9g7k0", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99doy814", "playerId": "mr8cazdpg2ofo", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99daxod5", "playerId": "mr8cazdpq4q9s", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99dlcmbx", "playerId": "mr8cazdp9qd6j", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99d8gsrp", "playerId": "mr8cazdpr3ft2", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99d6bgr6", "playerId": "mr8cazdpi7qhi", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99d5ncdw", "playerId": "mr8cazdpvup5x", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99dkwa75", "playerId": "mr8cazdp5bswb", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99d18h3o", "playerId": "mr8cazdpnlk87", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99djgel6", "playerId": "mr8cazdp20k1z", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}, {"id": "mr8cb99dk3629", "playerId": "mr8cazdpo4s5h", "date": "2026-07-05", "type": "signon", "label": "Season 5 sign on fee", "amount": 3500}], "payments": [], "expenses": [{"id": "mr8cbfa5u70e0", "date": "2026-07-04", "label": "Referee \u00b7 Berry Brow Reserves (H)", "amount": 4500}]};
+let db = load();
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return JSON.parse(JSON.stringify(SEED_JSON));
+    const d = JSON.parse(raw);
+    d.settings = Object.assign({}, DEF.settings, d.settings||{});
+    for(const k of ['players','matches','apps','charges','payments','expenses']) d[k]=d[k]||[];
+    return d;
+  }catch(e){ return JSON.parse(JSON.stringify(SEED_JSON)); }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(db)); refreshHdr(); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ============ MONEY / DATE HELPERS ============ */
+function fm(p){ // pence -> £ string
+  const neg = p<0; p=Math.abs(p);
+  const s = (p%100===0) ? '£'+(p/100) : '£'+(p/100).toFixed(2);
+  return neg ? '-'+s : s;
+}
+function parseMoney(v){ const n=parseFloat(String(v).replace(/[£,\s]/g,'')); return isNaN(n)?null:Math.round(n*100); }
+function fdate(iso){
+  if(!iso) return '';
+  const d=new Date(iso+'T12:00:00');
+  return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+}
+function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
+
+/* ============ BALANCE ENGINE ============ */
+function appCharge(a){
+  const m = db.matches.find(x=>x.id===a.matchId); if(!m) return 0;
+  if(a.mins<=0) return 0;
+  if(m.pricing==='flat') return m.flatAmount;
+  if(a.mins>60) return db.settings.tierOver60;
+  if(a.mins>=45) return db.settings.tier45to60;
+  return db.settings.tierUnder45;
+}
+function cardCharges(a){
+  let t=0;
+  if(a.cardY) t+=db.settings.cardY;
+  if(a.cardR) t+=db.settings.cardR;
+  return t;
+}
+function ledger(pid){ // full item list, chronological, each tagged with a category
+  const items=[];
+  for(const a of db.apps.filter(x=>x.playerId===pid)){
+    const m=db.matches.find(x=>x.id===a.matchId); if(!m) continue;
+    const c=appCharge(a);
+    if(c>0) items.push({date:m.date, kind:'chg', cat:'subs', amt:c, label:m.opponent+' ('+(m.venue==='H'?'H':'A')+')', sub:fdate(m.date)+' · '+a.mins+' mins', ref:'app:'+a.id});
+    if(a.cardY) items.push({date:m.date, kind:'chg', cat:'subs', amt:db.settings.cardY, label:'Yellow card — '+m.opponent, sub:fdate(m.date)+' · FA charge, no club profit', ref:'cardY:'+a.id});
+    if(a.cardR) items.push({date:m.date, kind:'chg', cat:'subs', amt:db.settings.cardR, label:'Red card — '+m.opponent, sub:fdate(m.date)+' · FA charge, no club profit', ref:'cardR:'+a.id});
+  }
+  for(const c of db.charges.filter(x=>x.playerId===pid))
+    items.push({date:c.date, kind:'chg', cat:(c.type==='signon'?'signon':'other'), amt:c.amount, label:c.label, sub:fdate(c.date), ref:'charge:'+c.id});
+  for(const p of db.payments.filter(x=>x.playerId===pid))
+    items.push({date:p.date, kind:'pay', cat:'payment', amt:p.amount, label:'Payment · '+(p.method==='cash'?'cash':'bank transfer'), sub:fdate(p.date)+(p.note?' · '+p.note:''), ref:'payment:'+p.id});
+  items.sort((a,b)=> a.date<b.date?-1 : a.date>b.date?1 : 0);
+  return items;
+}
+function balance(pid){
+  let t=0;
+  for(const i of ledger(pid)) t += (i.kind==='chg'? i.amt : -i.amt);
+  return t;
+}
+function totalOwed(){
+  let t=0;
+  for(const p of db.players.filter(p=>p.active)){ const b=balance(p.id); if(b>0) t+=b; }
+  return t;
+}
+
+/* ============ NAV / RENDER ============ */
+let route={page:'squad'};
+function go(page, arg){ route={page, arg}; render(); window.scrollTo(0,0); }
+function setTab(t){
+  for(const id of ['squad','match','money','more']) document.getElementById('tb-'+id).classList.remove('active');
+  const map={squad:'squad',matches:'match',match:'match',money:'money',more:'more',player:'squad',settings:'more'};
+  const el=document.getElementById('tb-'+(map[t]||'squad')); if(el) el.classList.add('active');
+}
+function refreshHdr(){
+  document.getElementById('hdrOwed').textContent = 'OWED: '+fm(totalOwed());
+  const days=(Date.now()-(db.settings.lastBackup||0))/86400000;
+  document.getElementById('backupBanner').style.display = (db.players.length&&days>7)?'block':'none';
+}
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block';
+  clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',1800);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function render(){
+  setTab(route.page);
+  const v=document.getElementById('view');
+  v.innerHTML = PAGES[route.page] ? PAGES[route.page](route.arg) : '';
+  refreshHdr();
+}
+
+/* ============ PAGES ============ */
+const PAGES={};
+
+/* ---- SQUAD ---- */
+PAGES.squad = ()=>{
+  const act=db.players.filter(p=>p.active);
+  if(!act.length) return `
+    <div class="empty">No players yet.<br>Add your squad to get started.</div>
+    <button class="primary" onclick="go('more')">Add players</button>`;
+  const rows = act.map(p=>({p, b:balance(p.id)}))
+    .sort((a,b)=> b.b-a.b)
+    .map(({p,b})=>{
+      const cls = b>0?'owes': b<0?'credit':'clear';
+      const txt = b>0?fm(b)+' owed': b<0?fm(-b)+' credit':'clear';
+      const lastPay = db.payments.filter(x=>x.playerId===p.id).sort((a,c)=>c.date<a.date?-1:1)[0];
+      return `<div class="rowline" onclick="go('player','${p.id}')">
+        <div><div class="nm">${esc(p.name)}</div>
+        <div class="sub">${lastPay?'last paid '+fdate(lastPay.date):'no payments yet'}</div></div>
+        <span class="pill ${cls}">${txt}</span></div>`;
+    }).join('');
+  return `<h2>Squad · ${act.length} players</h2><div class="card flat">${rows}</div>
+    <button class="gold" onclick="gcMessage()">📋 Copy GC chase list</button>
+    <div class="note">Tap a player for their full ledger and a ready-made private chase message.</div>`;
+};
+
+/* ---- PLAYER LEDGER ---- */
+function ledgerSection(items,emptyMsg,pid){
+  if(!items.length) return `<div class="empty">${emptyMsg}</div>`;
+  return items.map(i=>`
+    <div class="led">
+      <div class="l">${esc(i.label)}<div class="sub">${esc(i.sub)}</div></div>
+      <div style="display:flex;align-items:center">
+        <span class="amt ${i.kind==='chg'?'chg':'pay'}">${i.kind==='chg'?'+':'−'}${fm(i.amt)}</span>
+        ${i.ref.startsWith('charge:')||i.ref.startsWith('payment:')?`<button class="del" onclick="delItem('${i.ref}','${pid}')">✕</button>`:''}
+      </div>
+    </div>`).join('');
+}
+PAGES.player = (pid)=>{
+  const p=db.players.find(x=>x.id===pid); if(!p) return '';
+  const b=balance(pid);
+  const items=ledger(pid);
+  const signon=items.filter(i=>i.cat==='signon');
+  const subs=items.filter(i=>i.cat==='subs');
+  const other=items.filter(i=>i.cat==='other');
+  const pays=items.filter(i=>i.cat==='payment');
+  const signonTotal=signon.reduce((t,i)=>t+i.amt,0);
+  const subsTotal=subs.reduce((t,i)=>t+i.amt,0);
+  const otherTotal=other.reduce((t,i)=>t+i.amt,0);
+  const paysTotal=pays.reduce((t,i)=>t+i.amt,0);
+  const cls=b>0?'r':b<0?'go':'g';
+  return `
+  <button class="back" onclick="go('squad')">‹ Squad</button>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <div style="font-family:var(--cond);font-size:24px;font-weight:800;letter-spacing:.03em;text-transform:uppercase">${esc(p.name)}</div>
+      <b class="${cls}" style="font-family:var(--cond);font-size:22px">${b<0? fm(-b)+' CR' : fm(b)}</b>
+    </div>
+  </div>
+  <div class="btnrow">
+    <button class="primary" onclick="payForm('${pid}')">＋ Payment</button>
+    <button class="ghost" onclick="chargeForm('${pid}')">＋ Charge</button>
+  </div>
+  <button class="gold" onclick="waMessage('${pid}')">💬 Copy chase message</button>
+
+  <h2>Sign-on fee ${signonTotal?'· '+fm(signonTotal):''}</h2>
+  <div class="card flat">${ledgerSection(signon,'No sign-on fee charged yet.',pid)}</div>
+
+  <h2>Weekly subs ${subsTotal?'· '+fm(subsTotal):''}</h2>
+  <div class="card flat">${ledgerSection(subs,'No match fees or cards charged yet.',pid)}</div>
+
+  <h2>Other charges ${otherTotal?'· '+fm(otherTotal):''}</h2>
+  <div class="card flat">${ledgerSection(other,'No one-off charges (tops, tracksuits, fines) yet.',pid)}</div>
+
+  <h2>Payments ${paysTotal?'· '+fm(paysTotal):''}</h2>
+  <div class="card flat">${ledgerSection(pays,'No payments recorded yet.',pid)}</div>
+
+  <button class="danger" onclick="archivePlayer('${pid}')">Archive player</button>`;
+};
+
+/* ---- MATCHES ---- */
+PAGES.matches = ()=>{
+  const ms=[...db.matches].sort((a,b)=> b.date<a.date?-1:1);
+  const rows = ms.length? ms.map(m=>{
+    const played=db.apps.filter(a=>a.matchId===m.id && a.mins>0).length;
+    let inc=0; db.apps.filter(a=>a.matchId===m.id).forEach(a=>{inc+=appCharge(a)+cardCharges(a);});
+    return `<div class="rowline" onclick="go('match','${m.id}')">
+      <div><div class="nm">${esc(m.opponent)} (${m.venue})</div>
+      <div class="sub">${fdate(m.date)} · ${esc(m.type)} · ${played} played</div></div>
+      <span class="pill clear">${fm(inc)}</span></div>`;
+  }).join('') : `<div class="empty">No matches yet.<br>Add the Berry Brow friendly to get rolling.</div>`;
+  return `<h2>Matches</h2><div class="card flat">${rows}</div>
+  <button class="primary" onclick="matchForm()">＋ New match</button>`;
+};
+
+/* ---- MATCH DETAIL (minutes entry) ---- */
+PAGES.match = (mid)=>{
+  const m=db.matches.find(x=>x.id===mid); if(!m) return '';
+  const act=db.players.filter(p=>p.active);
+  const rows=act.map(p=>{
+    let a=db.apps.find(x=>x.matchId===mid && x.playerId===p.id);
+    const mins=a?a.mins:0;
+    const sel=(lo,hi)=> mins>=lo&&mins<=hi ?'sel':'';
+    return `<div class="minrow">
+      <div class="who">${esc(p.name)}</div>
+      <button class="minbtn ${mins>60?'sel':''}" onclick="setMins('${mid}','${p.id}',90)">90</button>
+      <button class="minbtn ${mins>=45&&mins<=60?'sel':''}" onclick="setMins('${mid}','${p.id}',60)">60</button>
+      <button class="minbtn ${mins>0&&mins<45?'sel':''}" onclick="setMins('${mid}','${p.id}',30)">&lt;45</button>
+      <button class="minbtn ${mins===0?'sel':''}" onclick="setMins('${mid}','${p.id}',0)">✕</button>
+      <button class="minbtn cardbtn ${a&&a.cardY?'selY':''}" onclick="toggleCard('${mid}','${p.id}','Y')">Y</button>
+      <button class="minbtn cardbtn ${a&&a.cardR?'selR':''}" onclick="toggleCard('${mid}','${p.id}','R')">R</button>
+    </div>`;
+  }).join('');
+  let inc=0; db.apps.filter(a=>a.matchId===mid).forEach(a=>{inc+=appCharge(a)+cardCharges(a);});
+  const priceNote = m.pricing==='flat' ? 'Flat '+fm(m.flatAmount)+' for anyone who played'
+    : 'Tiered: '+fm(db.settings.tierOver60)+' over 60 · '+fm(db.settings.tier45to60)+' for 45 to 60 · '+fm(db.settings.tierUnder45)+' under 45';
+  return `
+  <button class="back" onclick="go('matches')">‹ Matches</button>
+  <div class="card flat">
+    <div class="matchhead">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div class="nm" style="font-size:18px">${esc(m.opponent)} (${m.venue})</div>
+        <span class="pill clear">${fm(inc)}</span>
+      </div>
+      <div class="sub" style="color:var(--faint);font-size:12.5px;margin-top:3px">${fdate(m.date)} · ${esc(m.type)} · ${priceNote}</div>
+    </div>
+    ${rows || '<div class="empty">Add players first (More tab).</div>'}
+  </div>
+  <div class="note">Tap minutes for each lad who played: 90 = over an hour, 60 = 45 to 60 mins, &lt;45 = any cameo. Y and R log card charges. Charges update instantly.</div>
+  <button class="danger" onclick="delMatch('${mid}')">Delete match</button>`;
+};
+
+/* ---- MONEY ---- */
+PAGES.money = ()=>{
+  const pays=[...db.payments].sort((a,b)=> b.date<a.date?-1:1).slice(0,25);
+  let collected=0, cash=0, bank=0;
+  db.payments.forEach(p=>{ collected+=p.amount; if(p.method==='cash') cash+=p.amount; else bank+=p.amount; });
+  let charged=0, signonCharged=0, subsCharged=0, otherCharged=0;
+  db.players.forEach(p=>{ ledger(p.id).forEach(i=>{
+    if(i.kind!=='chg') return;
+    charged+=i.amt;
+    if(i.cat==='signon') signonCharged+=i.amt;
+    else if(i.cat==='subs') subsCharged+=i.amt;
+    else otherCharged+=i.amt;
+  }); });
+  let spent=0; db.expenses.forEach(e=>spent+=e.amount);
+  const rows=pays.length? pays.map(p=>{
+    const pl=db.players.find(x=>x.id===p.playerId);
+    return `<div class="led"><div class="l">${pl?esc(pl.name):'?'} · ${p.method==='cash'?'cash':'transfer'}<div class="sub">${fdate(p.date)}${p.note?' · '+esc(p.note):''}</div></div>
+    <span class="amt pay">−${fm(p.amount)}</span></div>`;
+  }).join('') : `<div class="empty">No payments recorded yet.</div>`;
+  const exp=[...db.expenses].sort((a,b)=> b.date<a.date?-1:1).slice(0,10).map(e=>`
+    <div class="led"><div class="l">${esc(e.label)}<div class="sub">${fdate(e.date)}</div></div>
+    <span class="amt chg">${fm(e.amount)}</span></div>`).join('');
+  return `
+  <h2>Charged, by type</h2>
+  <div class="card">
+    <div class="stat"><span>Sign-on fees</span><b>${fm(signonCharged)}</b></div>
+    <div class="stat"><span>Weekly subs (match fees & cards)</span><b>${fm(subsCharged)}</b></div>
+    <div class="stat"><span>Other (tops, tracksuits, fines)</span><b>${fm(otherCharged)}</b></div>
+    <div class="stat"><span>Total charged</span><b>${fm(charged)}</b></div>
+  </div>
+  <h2>Season money</h2>
+  <div class="card">
+    <div class="stat"><span>Collected</span><b class="g">${fm(collected)}</b></div>
+    <div class="stat"><span>— by transfer</span><b class="g">${fm(bank)}</b></div>
+    <div class="stat"><span>— in cash</span><b class="go">${fm(cash)}</b></div>
+    <div class="stat"><span>Still owed</span><b class="r">${fm(totalOwed())}</b></div>
+    <div class="stat"><span>Club costs logged</span><b class="r">${fm(spent)}</b></div>
+    <div class="stat"><span>Collected minus costs</span><b class="${collected-spent>=0?'g':'r'}">${fm(collected-spent)}</b></div>
+  </div>
+  <div class="btnrow">
+    <button class="primary" onclick="payForm()">＋ Payment</button>
+    <button class="ghost" onclick="expenseForm()">＋ Club cost</button>
+  </div>
+  <div class="note">The cash line is your sanity check: it should match what is physically in the tin or your pocket.</div>
+  <h2>Recent payments</h2>
+  <div class="card flat">${rows}</div>
+  <h2>Recent club costs</h2>
+  <div class="card flat">${exp || '<div class="empty">Refs, pitch, balls. Log them here.</div>'}</div>`;
+};
+
+/* ---- MORE ---- */
+PAGES.more = ()=>{
+  const s=db.settings;
+  return `
+  <h2>Squad management</h2>
+  <div class="card">
+    <label>Add players, one per line</label>
+    <textarea id="bulkNames" placeholder="Uwais Khan\nUsama Habeeb\nAntonio Ferra"></textarea>
+    <button class="primary" onclick="bulkAdd()">Add to squad</button>
+    <button class="ghost" onclick="applySignOn()">Apply ${fm(s.signOn)} sign on fee to all (once)</button>
+    <div class="note">Sign on only hits players who have not already been charged one, so it is safe to press again after new signings join.</div>
+  </div>
+  <h2>Fees</h2>
+  <div class="card">
+    <div class="grid3">
+      <div><label>Over 60 min</label><input id="s_t1" value="${(s.tierOver60/100)}" inputmode="decimal"></div>
+      <div><label>45 to 60</label><input id="s_t2" value="${(s.tier45to60/100)}" inputmode="decimal"></div>
+      <div><label>Under 45</label><input id="s_t3" value="${(s.tierUnder45/100)}" inputmode="decimal"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Away friendly</label><input id="s_af" value="${(s.awayFriendlyFlat/100)}" inputmode="decimal"></div>
+      <div><label>Sign on</label><input id="s_so" value="${(s.signOn/100)}" inputmode="decimal"></div>
+      <div><label>Ref cost (H)</label><input id="s_ref" value="${(s.refCost/100)}" inputmode="decimal"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Yellow card</label><input id="s_y" value="${(s.cardY/100)}" inputmode="decimal"></div>
+      <div><label>Red card</label><input id="s_r" value="${(s.cardR/100)}" inputmode="decimal"></div>
+    </div>
+    <label>Bank details (goes in chase messages)</label>
+    <input id="s_bank" value="${esc(s.bank)}" placeholder="Fenton United FC · 12-34-56 · 12345678">
+    <button class="primary" onclick="saveSettings()">Save settings</button>
+  </div>
+  <h2>Backup</h2>
+  <div class="card">
+    <button class="gold" onclick="exportJson()">⬇ Backup now (save file)</button>
+    <button class="ghost" onclick="document.getElementById('importFile').click()">⬆ Restore from backup</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJson(event)">
+    <div class="note">Backup weekly. The file saves to your downloads: keep it in the Fenton folder or iCloud. ${s.lastBackup?('Last backup: '+new Date(s.lastBackup).toLocaleDateString()):'Never backed up yet.'}</div>
+  </div>
+  <h2>Archived players</h2>
+  <div class="card flat">${db.players.filter(p=>!p.active).map(p=>`
+    <div class="rowline" onclick="unarchive('${p.id}')"><div class="nm">${esc(p.name)}</div><span class="tag">tap to restore</span></div>
+  `).join('') || '<div class="empty">None.</div>'}</div>`;
+};
+
+/* ============ ACTIONS ============ */
+function bulkAdd(){
+  const t=document.getElementById('bulkNames').value.trim();
+  if(!t) return toast('Type some names first');
+  let n=0;
+  for(let line of t.split('\n')){
+    line=line.trim(); if(!line) continue;
+    if(db.players.some(p=>p.name.toLowerCase()===line.toLowerCase())) continue;
+    db.players.push({id:uid(), name:line, active:true}); n++;
+  }
+  save(); toast(n+' added'); render();
+}
+function archivePlayer(pid){
+  const b=balance(pid);
+  if(b>0 && !confirm('Still owes '+fm(b)+'. Archive anyway?')) return;
+  const p=db.players.find(x=>x.id===pid); p.active=false; save(); go('squad'); toast('Archived');
+}
+function unarchive(pid){ db.players.find(x=>x.id===pid).active=true; save(); render(); toast('Restored'); }
+
+function applySignOn(){
+  let n=0;
+  for(const p of db.players.filter(p=>p.active)){
+    if(db.charges.some(c=>c.playerId===p.id && c.type==='signon')) continue;
+    db.charges.push({id:uid(), playerId:p.id, date:today(), type:'signon', label:'Season 5 sign on fee', amount:db.settings.signOn}); n++;
+  }
+  save(); render(); toast(n? 'Sign on charged to '+n+' players' : 'Everyone already charged');
+}
+
+/* match form via prompt-free inline page */
+function matchForm(){
+  const v=document.getElementById('view');
+  v.innerHTML=`
+  <button class="back" onclick="go('matches')">‹ Cancel</button>
+  <h2>New match</h2>
+  <div class="card">
+    <label>Opponent</label><input id="m_opp" placeholder="Berry Brow Reserves">
+    <label>Date</label><input id="m_date" type="date" value="${today()}">
+    <div class="grid2">
+      <div><label>Venue</label><select id="m_venue" onchange="suggestPricing()"><option value="H">Home</option><option value="A">Away</option></select></div>
+      <div><label>Type</label><select id="m_type" onchange="suggestPricing()"><option>Friendly</option><option>League</option><option>Cup</option></select></div>
+    </div>
+    <div class="grid2">
+      <div><label>Pricing</label><select id="m_pricing"><option value="tiered">Tiered by minutes</option><option value="flat">Flat per player</option></select></div>
+      <div><label>Flat amount £</label><input id="m_flat" value="${db.settings.awayFriendlyFlat/100}" inputmode="decimal"></div>
+    </div>
+    <label>Ref cost £ (logged as club cost, 0 for none)</label>
+    <input id="m_ref" value="${db.settings.refCost/100}" inputmode="decimal">
+    <button class="primary" onclick="createMatch()">Create match</button>
+    <div class="note">Home games default to tiered pricing and a ref cost. Away friendlies default to flat ${fm(db.settings.awayFriendlyFlat)} each to split the ref.</div>
+  </div>`;
+  suggestPricing();
+}
+function suggestPricing(){
+  const venue=document.getElementById('m_venue').value;
+  const type=document.getElementById('m_type').value;
+  const pr=document.getElementById('m_pricing');
+  const ref=document.getElementById('m_ref');
+  if(venue==='A' && type==='Friendly'){ pr.value='flat'; ref.value=0; }
+  else if(venue==='A'){ pr.value='tiered'; ref.value=0; }
+  else { pr.value='tiered'; ref.value=db.settings.refCost/100; }
+}
+function createMatch(){
+  const opp=document.getElementById('m_opp').value.trim();
+  if(!opp) return toast('Opponent name needed');
+  const date=document.getElementById('m_date').value || today();
+  const venue=document.getElementById('m_venue').value;
+  const type=document.getElementById('m_type').value;
+  const pricing=document.getElementById('m_pricing').value;
+  const flat=parseMoney(document.getElementById('m_flat').value) ?? db.settings.awayFriendlyFlat;
+  const refc=parseMoney(document.getElementById('m_ref').value) || 0;
+  const id=uid();
+  db.matches.push({id, opponent:opp, date, venue, type, pricing, flatAmount:flat});
+  if(refc>0) db.expenses.push({id:uid(), date, label:'Referee · '+opp+' ('+venue+')', amount:refc});
+  save(); go('match', id); toast('Match created. Set minutes.');
+}
+function delMatch(mid){
+  if(!confirm('Delete this match and all its charges?')) return;
+  db.matches=db.matches.filter(m=>m.id!==mid);
+  db.apps=db.apps.filter(a=>a.matchId!==mid);
+  save(); go('matches'); toast('Deleted');
+}
+function setMins(mid,pid,mins){
+  let a=db.apps.find(x=>x.matchId===mid && x.playerId===pid);
+  if(!a){ a={id:uid(), matchId:mid, playerId:pid, mins:0, cardY:false, cardR:false}; db.apps.push(a); }
+  a.mins=mins;
+  if(mins===0 && !a.cardY && !a.cardR) db.apps=db.apps.filter(x=>x.id!==a.id);
+  save(); render();
+}
+function toggleCard(mid,pid,which){
+  let a=db.apps.find(x=>x.matchId===mid && x.playerId===pid);
+  if(!a){ a={id:uid(), matchId:mid, playerId:pid, mins:0, cardY:false, cardR:false}; db.apps.push(a); }
+  if(which==='Y') a.cardY=!a.cardY; else a.cardR=!a.cardR;
+  if(a.mins===0 && !a.cardY && !a.cardR) db.apps=db.apps.filter(x=>x.id!==a.id);
+  save(); render();
+}
+
+/* payment + charge forms */
+function payForm(pid){
+  const v=document.getElementById('view');
+  const opts=db.players.filter(p=>p.active).map(p=>{
+    const b=balance(p.id);
+    return `<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.name)}${b>0?' — owes '+fm(b):''}</option>`;
+  }).join('');
+  v.innerHTML=`
+  <button class="back" onclick="go(${pid?`'player','${pid}'`:`'money'`})">‹ Cancel</button>
+  <h2>Record payment</h2>
+  <div class="card">
+    <label>Player</label><select id="p_pid">${opts}</select>
+    <div class="grid2">
+      <div><label>Amount £</label><input id="p_amt" inputmode="decimal" placeholder="5"></div>
+      <div><label>Date</label><input id="p_date" type="date" value="${today()}"></div>
+    </div>
+    <label>Method</label>
+    <select id="p_method"><option value="transfer">Bank transfer</option><option value="cash">Cash</option></select>
+    <label>Note (optional)</label><input id="p_note" placeholder="paid at training">
+    <button class="primary" onclick="addPayment()">Save payment</button>
+  </div>`;
+}
+function addPayment(){
+  const pid=document.getElementById('p_pid').value;
+  const amt=parseMoney(document.getElementById('p_amt').value);
+  if(!amt || amt<=0) return toast('Enter an amount');
+  db.payments.push({id:uid(), playerId:pid, amount:amt, date:document.getElementById('p_date').value||today(),
+    method:document.getElementById('p_method').value, note:document.getElementById('p_note').value.trim()});
+  save(); go('player',pid); toast('Payment saved');
+}
+function chargeForm(pid){
+  const v=document.getElementById('view');
+  const opts=db.players.filter(p=>p.active).map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.name)}</option>`).join('');
+  v.innerHTML=`
+  <button class="back" onclick="go('player','${pid}')">‹ Cancel</button>
+  <h2>Add charge</h2>
+  <div class="card">
+    <label>Player</label><select id="c_pid">${opts}</select>
+    <label>What for</label>
+    <select id="c_preset" onchange="presetCharge()">
+      <option value="">Custom…</option>
+      <option value="Training top|2000">Training top — £20</option>
+      <option value="Tracksuit|0">Tracksuit — set price</option>
+      <option value="Fine|0">Fine — set amount</option>
+    </select>
+    <label>Label</label><input id="c_label" placeholder="Training top">
+    <div class="grid2">
+      <div><label>Amount £</label><input id="c_amt" inputmode="decimal"></div>
+      <div><label>Date</label><input id="c_date" type="date" value="${today()}"></div>
+    </div>
+    <button class="primary" onclick="addCharge()">Save charge</button>
+  </div>`;
+}
+function presetCharge(){
+  const v=document.getElementById('c_preset').value; if(!v) return;
+  const [label,amt]=v.split('|');
+  document.getElementById('c_label').value=label;
+  if(+amt>0) document.getElementById('c_amt').value=(+amt/100);
+}
+function addCharge(){
+  const pid=document.getElementById('c_pid').value;
+  const label=document.getElementById('c_label').value.trim();
+  const amt=parseMoney(document.getElementById('c_amt').value);
+  if(!label) return toast('Label needed');
+  if(!amt || amt<=0) return toast('Enter an amount');
+  db.charges.push({id:uid(), playerId:pid, date:document.getElementById('c_date').value||today(), type:'item', label, amount:amt});
+  save(); go('player',pid); toast('Charge added');
+}
+function delItem(ref,pid){
+  const [kind,id]=ref.split(':');
+  if(kind==='charge'){ if(!confirm('Delete this charge?'))return; db.charges=db.charges.filter(c=>c.id!==id); }
+  if(kind==='payment'){ if(!confirm('Delete this payment?'))return; db.payments=db.payments.filter(p=>p.id!==id); }
+  save(); go('player',pid);
+}
+function expenseForm(){
+  const v=document.getElementById('view');
+  v.innerHTML=`
+  <button class="back" onclick="go('money')">‹ Cancel</button>
+  <h2>Club cost</h2>
+  <div class="card">
+    <label>What</label><input id="e_label" placeholder="Pitch hire instalment / balls / ref">
+    <div class="grid2">
+      <div><label>Amount £</label><input id="e_amt" inputmode="decimal"></div>
+      <div><label>Date</label><input id="e_date" type="date" value="${today()}"></div>
+    </div>
+    <button class="primary" onclick="addExpense()">Save cost</button>
+  </div>`;
+}
+function addExpense(){
+  const label=document.getElementById('e_label').value.trim();
+  const amt=parseMoney(document.getElementById('e_amt').value);
+  if(!label||!amt) return toast('Fill both in');
+  db.expenses.push({id:uid(), date:document.getElementById('e_date').value||today(), label, amount:amt});
+  save(); go('money'); toast('Cost logged');
+}
+
+/* ============ MESSAGES ============ */
+function playerMessage(pid){
+  const p=db.players.find(x=>x.id===pid);
+  const b=balance(pid);
+  const items=ledger(pid);
+  let lines=['*FENTON UNITED — subs update*', p.name+':',''];
+  let chg=0,paid=0;
+  for(const i of items){
+    if(i.kind==='chg'){ chg+=i.amt; lines.push('• '+i.sub.split(' · ')[0]+' — '+i.label+(i.sub.includes('mins')?' — '+i.sub.split(' · ')[1]:'')+' — '+fm(i.amt)); }
+    else paid+=i.amt;
+  }
+  lines.push('');
+  if(paid>0) lines.push('Paid so far: '+fm(paid));
+  lines.push(b>0? '*Owed: '+fm(b)+'*' : b<0? '*In credit: '+fm(-b)+'*' : '*All square 👍*');
+  if(b>0 && db.settings.bank) lines.push('', db.settings.bank, 'Reference: '+p.name.split(' ')[0].toUpperCase());
+  return lines.join('\n');
+}
+function waMessage(pid){
+  copyText(playerMessage(pid));
+  toast('Message copied — paste into WhatsApp');
+}
+function gcMessage(){
+  const owers=db.players.filter(p=>p.active).map(p=>({p,b:balance(p.id)})).filter(x=>x.b>0).sort((a,b)=>b.b-a.b);
+  if(!owers.length) return toast('Nobody owes anything 🎉');
+  let lines=['*FENTON UNITED — subs owed* 💰',''];
+  for(const {p,b} of owers) lines.push(p.name+' — '+fm(b));
+  lines.push('','Message me for your breakdown.');
+  if(db.settings.bank) lines.push(db.settings.bank);
+  copyText(lines.join('\n'));
+  toast('GC list copied');
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).catch(()=>fallbackCopy(t)); }
+  else fallbackCopy(t);
+}
+function fallbackCopy(t){
+  const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta);
+  ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+}
+
+/* ============ SETTINGS / BACKUP ============ */
+function saveSettings(){
+  const s=db.settings;
+  const g=(id)=>parseMoney(document.getElementById(id).value);
+  s.tierOver60=g('s_t1')??s.tierOver60; s.tier45to60=g('s_t2')??s.tier45to60; s.tierUnder45=g('s_t3')??s.tierUnder45;
+  s.awayFriendlyFlat=g('s_af')??s.awayFriendlyFlat; s.signOn=g('s_so')??s.signOn; s.refCost=g('s_ref')??s.refCost;
+  s.cardY=g('s_y')??s.cardY; s.cardR=g('s_r')??s.cardR;
+  s.bank=document.getElementById('s_bank').value.trim();
+  save(); toast('Settings saved'); render();
+}
+function exportJson(){
+  db.settings.lastBackup=Date.now(); save();
+  const blob=new Blob([JSON.stringify(db,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='fenton-payments-backup-'+today()+'.json';
+  a.click();
+  toast('Backup saved');
+  render();
+}
+function importJson(ev){
+  const f=ev.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.players || !d.settings) throw 0;
+      if(!confirm('Replace everything with this backup?')) return;
+      db=d; save(); render(); toast('Backup restored');
+    }catch(e){ toast('Not a valid backup file'); }
+  };
+  r.readAsText(f);
+}
+
+/* ============ BOOT ============ */
+render();
+</script>
+</body>
+</html>
